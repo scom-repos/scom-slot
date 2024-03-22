@@ -267,17 +267,12 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
             reelContainer.y = margin * 2.8;
             reelContainer.x = 200;
             const top = new scom_pixi_1.Graphics();
-            top.fill({ color: 0xFF3300 });
-            // top.beginFill(0xFF3300);
-            //.beginFill(0, 1);
             top.rect(0, 0, this.app.screen.width, margin);
-            // top.drawRect(0, 0, this.app.screen.width, margin);
+            top.fill('#FF3300');
             const bottom = new scom_pixi_1.Graphics();
-            bottom.fill({
-                color: 0,
-                a: 1
-            });
             bottom.rect(0, 240 + margin, this.app.screen.width, margin);
+            bottom.fill('#000000');
+            bottom.alpha = 1;
             // bottom.beginFill(0, 1);
             // bottom.drawRect(0, 240 + margin, this.app.screen.width, margin);
             //Add text Style properties
@@ -303,7 +298,7 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
                 wordWrapWidth: 300
             });
             //Add header text
-            const headerText = new scom_pixi_1.Text('Slot Machine', style);
+            const headerText = new scom_pixi_1.Text('Nostrnaut Slot Machine', style);
             headerText.x = Math.round((top.width - headerText.width) / 2);
             headerText.y = Math.round((margin - headerText.height) / 2);
             top.addChild(headerText);
