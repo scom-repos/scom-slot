@@ -46,7 +46,7 @@ let reel;
 const tweening = [];
 
 @customElements('i-scom-slot')
-export class ScomPost extends Module {
+export class ScomSlot extends Module {
 
     private pnlCanvas: VStack;
     private app: Application;

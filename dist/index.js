@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/scom-pixi"], function (require, exports, components_1, scom_pixi_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.ScomPost = void 0;
+    exports.ScomSlot = void 0;
     const moduleDir = components_1.application.currentModuleDir;
     const REEL_WIDTH = 90;
     const SYMBOL_SIZE = 80;
@@ -18,7 +18,7 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
     let reelContainer;
     let reel;
     const tweening = [];
-    let ScomPost = class ScomPost extends components_1.Module {
+    let ScomSlot = class ScomSlot extends components_1.Module {
         constructor(parent, options) {
             super(parent, options);
             this.balance = 500;
@@ -365,8 +365,8 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
             return this.$render("i-vstack", { id: "pnlCanvas", height: 1000, width: 1000, justifyContent: 'center', alignItems: 'center' });
         }
     };
-    ScomPost = __decorate([
+    ScomSlot = __decorate([
         (0, components_1.customElements)('i-scom-slot')
-    ], ScomPost);
-    exports.ScomPost = ScomPost;
+    ], ScomSlot);
+    exports.ScomSlot = ScomSlot;
 });

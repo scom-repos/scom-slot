@@ -10,7 +10,7 @@ declare module "@scom/scom-slot" {
             }
         }
     }
-    export class ScomPost extends Module {
+    export class ScomSlot extends Module {
         private pnlCanvas;
         private app;
         private balance;
@@ -38,7 +38,7 @@ declare module "@scom/scom-slot" {
             start: number;
         };
         lerp(a1: any, a2: any, t: any): number;
-        static create(options?: ScomSlotElement, parent?: Container): Promise<ScomPost>;
+        static create(options?: ScomSlotElement, parent?: Container): Promise<ScomSlot>;
         init(): Promise<void>;
         loadAsset(): Promise<void>;
         onAssetsLoaded(): void;
