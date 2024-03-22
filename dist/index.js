@@ -66,7 +66,7 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
         async init() {
             super.init();
             this.app = new scom_pixi_1.Application();
-            await this.app.init({ width: 640, height: 360, background: "#FFFFFF" });
+            await this.app.init({ width: 640, height: 360, background: 'transparent' });
             this.pnlCanvas.appendChild(this.app.canvas);
             await this.loadAsset();
             this.app.ticker.add(delta => {
@@ -267,18 +267,26 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
             reelContainer.y = margin * 2.8;
             reelContainer.x = 200;
             const top = new scom_pixi_1.Graphics();
-            top.beginFill(0xFF3300);
+            top.fill({ color: 0xFF3300 });
+            // top.beginFill(0xFF3300);
             //.beginFill(0, 1);
-            top.drawRect(0, 0, this.app.screen.width, margin);
+            top.rect(0, 0, this.app.screen.width, margin);
+            // top.drawRect(0, 0, this.app.screen.width, margin);
             const bottom = new scom_pixi_1.Graphics();
-            bottom.beginFill(0, 1);
-            bottom.drawRect(0, 240 + margin, this.app.screen.width, margin);
+            bottom.fill({
+                color: 0,
+                a: 1
+            });
+            bottom.rect(0, 240 + margin, this.app.screen.width, margin);
+            // bottom.beginFill(0, 1);
+            // bottom.drawRect(0, 240 + margin, this.app.screen.width, margin);
             //Add text Style properties
             const style = new scom_pixi_1.TextStyle({
                 fontFamily: 'Arial',
                 fontSize: 24,
                 fontStyle: 'italic',
                 fontWeight: 'bold',
+                fill: '#FFFFFF',
                 // fill: [new Color('#FFFFFF').toNumber(), new Color('#00FF99').toNumber()], // gradient
                 // stroke: '#4a1850',
                 stroke: {
@@ -295,7 +303,7 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
                 wordWrapWidth: 300
             });
             //Add header text
-            const headerText = new scom_pixi_1.Text('Nostrnaut Slot Machine', style);
+            const headerText = new scom_pixi_1.Text('Slot Machine', style);
             headerText.x = Math.round((top.width - headerText.width) / 2);
             headerText.y = Math.round((margin - headerText.height) / 2);
             top.addChild(headerText);
@@ -359,7 +367,7 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
             return (t) => --t * t * ((amount + 1) * t + amount) + 1;
         }
         render() {
-            return this.$render("i-panel", { id: "pnlCanvas", height: 1000, width: 1000 });
+            return this.$render("i-vstack", { id: "pnlCanvas", height: 1000, width: 1000, justifyContent: 'center', alignItems: 'center' });
         }
     };
     ScomPost = __decorate([

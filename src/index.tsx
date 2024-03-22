@@ -4,7 +4,8 @@ import {
     Container,
     Module,
     Panel,
-    application
+    application,
+    VStack
 } from "@ijstech/components";
 import {
     Application,
@@ -47,7 +48,7 @@ const tweening = [];
 @customElements('i-scom-slot')
 export class ScomPost extends Module {
 
-    private pnlCanvas: Panel;
+    private pnlCanvas: VStack;
     private app: Application;
     private balance: number = 500;
     private stake: number = 1;
@@ -109,7 +110,7 @@ export class ScomPost extends Module {
     async init() {
         super.init();
         this.app = new Application();
-        await this.app.init({width: 640, height: 360, background: "#FFFFFF"})
+        await this.app.init({width: 640, height: 360, background: 'transparent'})
         this.pnlCanvas.appendChild(this.app.canvas);
         await this.loadAsset();
         this.app.ticker.add(delta => {
@@ -351,12 +352,19 @@ export class ScomPost extends Module {
         reelContainer.y = margin * 2.8;
         reelContainer.x = 200;
         const top = new Graphics();
-        top.beginFill(0xFF3300);
+        top.fill({color: 0xFF3300})
+        // top.beginFill(0xFF3300);
         //.beginFill(0, 1);
-        top.drawRect(0, 0, this.app.screen.width, margin);
+        top.rect(0, 0, this.app.screen.width, margin)
+        // top.drawRect(0, 0, this.app.screen.width, margin);
         const bottom = new Graphics();
-        bottom.beginFill(0, 1);
-        bottom.drawRect(0, 240 + margin, this.app.screen.width, margin);
+        bottom.fill({
+            color: 0,
+            a: 1
+        });
+        bottom.rect(0, 240 + margin, this.app.screen.width, margin);
+        // bottom.beginFill(0, 1);
+        // bottom.drawRect(0, 240 + margin, this.app.screen.width, margin);
 
         //Add text Style properties
         const style = new TextStyle({
@@ -364,6 +372,7 @@ export class ScomPost extends Module {
             fontSize: 24,
             fontStyle: 'italic',
             fontWeight: 'bold',
+            fill: '#FFFFFF',
             // fill: [new Color('#FFFFFF').toNumber(), new Color('#00FF99').toNumber()], // gradient
             // stroke: '#4a1850',
             stroke: {
@@ -381,7 +390,7 @@ export class ScomPost extends Module {
         });
 
         //Add header text
-        const headerText = new Text('Nostrnaut Slot Machine', style);
+        const headerText = new Text('Slot Machine', style);
         headerText.x = Math.round((top.width - headerText.width) / 2);
         headerText.y = Math.round((margin - headerText.height) / 2);
         top.addChild(headerText);
@@ -466,6 +475,6 @@ export class ScomPost extends Module {
     }
 
     render() {
-        return <i-panel id={"pnlCanvas"} height={1000} width={1000}></i-panel>
+        return <i-vstack id={"pnlCanvas"} height={1000} width={1000} justifyContent={'center'} alignItems={'center'}></i-vstack>
     }
 }
