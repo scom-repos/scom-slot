@@ -22,6 +22,7 @@ import {
     Color
 
 } from "@scom/scom-pixi";
+import { SlotModel } from "./model";
 
 interface ScomSlotElement extends ControlElement {
 
@@ -47,7 +48,7 @@ const tweening = [];
 
 @customElements('i-scom-slot')
 export class ScomSlot extends Module {
-
+    private model: SlotModel;
     private pnlCanvas: VStack;
     private app: Application;
     private balance: number = 500;
@@ -59,9 +60,25 @@ export class ScomSlot extends Module {
     private orange;
     private loader: Loader;
     private running: boolean = false;
+    private _isPreview: boolean;
+    private headerText: Text;
 
     constructor(parent?: Container, options?: any) {
         super(parent, options);
+    }
+
+    get isPreview() {
+        return this._isPreview;
+    }
+
+    set isPreview(value: boolean) {
+        this._isPreview = value;
+        // if (this.pnlProduct) this.pnlProduct.cursor = value || !this.model.isLoggedIn ? "default" : "pointer";
+        // if (this.btnAddToCart) this.btnAddToCart.enabled = !value && this.model.isLoggedIn;
+    }
+
+    getConfigurators() {
+        return this.model.getConfigurators()
     }
 
     addStake() {
@@ -110,6 +127,8 @@ export class ScomSlot extends Module {
     async init() {
         super.init();
         this.app = new Application();
+        this.model = new SlotModel();
+        this.model.updateUIBySetData = this.updateUIBySetData.bind(this);
         await this.app.init({width: 640, height: 360, background: 'transparent'})
         this.pnlCanvas.appendChild(this.app.canvas);
         await this.loadAsset();
@@ -384,11 +403,12 @@ export class ScomSlot extends Module {
             wordWrapWidth: 300
         });
 
+        const { config, slotName } = this.getData() || {};
         //Add header text
-        const headerText = new Text('Nostrnaut Slot Machine', style);
-        headerText.x = Math.round((top.width - headerText.width) / 2);
-        headerText.y = Math.round((margin - headerText.height) / 2);
-        top.addChild(headerText);
+        this.headerText = new Text(config?.slotName || 'Slot Machine', style);
+        this.headerText.x = Math.round((top.width - this.headerText.width) / 2);
+        this.headerText.y = Math.round((margin - this.headerText.height) / 2);
+        top.addChild(this.headerText);
 
         //Stack Selector Text between arrow buttons
         let stackText = new Text(`${this.stake}`, style);
@@ -470,6 +490,30 @@ export class ScomSlot extends Module {
     }
 
     render() {
-        return <i-vstack id={"pnlCanvas"} height={1000} width={1000} justifyContent={'center'} alignItems={'center'}></i-vstack>
+        return <i-vstack id={"pnlCanvas"} height={'100%'} width={'100%'} justifyContent={'center'} alignItems={'center'}></i-vstack>
+    }
+
+    getData() {
+        return this.model.getData();
+    }
+
+    private async updateUIBySetData() {
+        const { config, slotName } = this.getData() || {};
+        this.headerText.text = config.slotName;
+        // this.imgProduct.url = product?.images?.[0] || "";
+        // this.lblName.caption = product?.name || "";
+        // if (product?.description) {
+        //     const plainText = await this.markdownDescription.toPlainText(product.description);
+        //     this.markdownDescription.load(plainText || "");
+        // } else {
+        //     this.markdownDescription.load("");
+        // }
+        // this.markdownDescription.visible = !!product?.description;
+        // this.lblPrice.caption = `${product?.price || ""} ${product?.currency || ""}`;
+        // this.lblPrice.visible = !this.model.isReservation;
+        // this.btnAddToCart.visible = !!product;
+        // this.isPurchased = await isPurchasedProduct(product.eventData.pubkey, product.id);
+        // this.updateProductMessage();
+        // this.updateCartButton();
     }
 }

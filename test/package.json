@@ -11,7 +11,7 @@
     },
     "devDependencies": {
         "@ijstech/cli": "^0.1.28",
-        "@ijstech/compiler": "^0.1.22",
+        "@ijstech/compiler": "0.1.99",
         "@scom/dapp": "^0.1.11",
         "@scom/scom-slot": "file:./ref"
     },

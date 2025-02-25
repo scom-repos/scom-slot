@@ -14,7 +14,7 @@ export default class Module1 extends Module {
 
     render() {
         return (
-            <i-vstack margin={{ left: 'auto', right: 'auto' }} maxWidth={960}>
+            <i-vstack margin={{ left: 'auto', right: 'auto' }} padding={{left: 0, right: 0, top: 0, bottom: 0}} maxWidth={'100%'}>
                 <i-scom-slot/>
             </i-vstack>
         );
