@@ -492,7 +492,6 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
                 wordWrapWidth: 300
             });
             const { config, slotName } = this.getData() || {};
-            console.log('onAssetLoaded', config);
             //Add header text
             this.headerText = new scom_pixi_1.Text(config?.slotName || 'Slot Machine', style);
             this.headerText.x = Math.round((top.width - this.headerText.width) / 2);
@@ -565,7 +564,6 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
         }
         async updateUIBySetData() {
             const { config, slotName } = this.getData() || {};
-            console.log('index.ts updateUIBySetData', config.slotName);
             this.headerText.text = config.slotName;
             // this.imgProduct.url = product?.images?.[0] || "";
             // this.lblName.caption = product?.name || "";
