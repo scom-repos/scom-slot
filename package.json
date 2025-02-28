@@ -15,7 +15,8 @@
         "test": "cd test && npm run test && cd .."
     },
     "dependencies": {
-        "@scom/scom-pixi": "^0.1.0"
+        "@scom/scom-pixi": "^0.1.0",
+        "howler": "^2.2.4"
     },
     "devDependencies": {
         "@ijstech/cli": "^0.1.26",

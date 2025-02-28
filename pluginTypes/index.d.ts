@@ -132,6 +132,8 @@ declare module "@scom/scom-slot" {
         private running;
         private _isPreview;
         private headerText;
+        private Howler;
+        private Howl;
         constructor(parent?: Container, options?: any);
         get isPreview(): boolean;
         set isPreview(value: boolean);
@@ -161,6 +163,7 @@ declare module "@scom/scom-slot" {
         lerp(a1: any, a2: any, t: any): number;
         static create(options?: ScomSlotElement, parent?: Container): Promise<ScomSlot>;
         init(): Promise<void>;
+        loadLib(moduleDir: string): Promise<unknown>;
         loadAsset(): Promise<void>;
         onAssetsLoaded(): void;
         startPlay(): void;
