@@ -207,6 +207,7 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
             this.win = 0;
             this.playing = false;
             this.running = false;
+            this.loadLib(moduleDir);
         }
         get isPreview() {
             return this._isPreview;
@@ -306,6 +307,23 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
                 }
             });
         }
+        async loadLib(moduleDir) {
+            let self = this;
+            return new Promise((resolve, reject) => {
+                components_2.RequireJS.config({
+                    baseUrl: `${moduleDir}/lib`,
+                    paths: {
+                        'howler': 'howler',
+                    }
+                });
+                components_2.RequireJS.require(['howler'], function (howler) {
+                    console.log("howler", howler);
+                    self.Howler = howler.Howler;
+                    self.Howl = howler.Howl;
+                    resolve(howler);
+                });
+            });
+        }
         async loadAsset() {
             // const imageDelivery = {
             //     extension: ExtensionType.LoadParser,
@@ -381,10 +399,10 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
             buttonsHolder.y = 0;
             const makeImageButton = (image, audioMP3, audioOGG, x, y, scale) => {
                 const button = scom_pixi_1.Sprite.from(image);
-                // const sound = new Howl({
-                //     src: [audioMP3, audioOGG]
-                // });
-                // button.sound = sound;
+                const sound = new this.Howl({
+                    src: [audioMP3, audioOGG]
+                });
+                button.sound = sound;
                 button.interactive = true;
                 // button.buttonMode = true;
                 // button.on('pointerdown', event => sound.play());
@@ -536,10 +554,10 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
             this.reduceBalance();
             // Add sound when reels running is set to true
             if (this.running) {
-                // const sound = new Howl({
-                //     src: ['./assets/sounds/mp3/arcade-game-fruit-machine-jackpot-002-long.mp3', './assets/sounds/mp3/arcade-game-fruit-machine-jackpot-002-long.mp3']
-                // });
-                // sound.play();
+                const sound = new this.Howl({
+                    src: [`${moduleDir}/assets/sounds/mp3/arcade-game-fruit-machine-jackpot-002-long.mp3`, `${moduleDir}/assets/sounds/mp3/arcade-game-fruit-machine-jackpot-002-long.mp3`]
+                });
+                sound.play();
             }
             ;
             for (let i = 0; i < reels.length; i++) {
@@ -565,21 +583,6 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
         async updateUIBySetData() {
             const { config, slotName } = this.getData() || {};
             this.headerText.text = config.slotName;
-            // this.imgProduct.url = product?.images?.[0] || "";
-            // this.lblName.caption = product?.name || "";
-            // if (product?.description) {
-            //     const plainText = await this.markdownDescription.toPlainText(product.description);
-            //     this.markdownDescription.load(plainText || "");
-            // } else {
-            //     this.markdownDescription.load("");
-            // }
-            // this.markdownDescription.visible = !!product?.description;
-            // this.lblPrice.caption = `${product?.price || ""} ${product?.currency || ""}`;
-            // this.lblPrice.visible = !this.model.isReservation;
-            // this.btnAddToCart.visible = !!product;
-            // this.isPurchased = await isPurchasedProduct(product.eventData.pubkey, product.id);
-            // this.updateProductMessage();
-            // this.updateCartButton();
         }
     };
     ScomSlot = __decorate([
