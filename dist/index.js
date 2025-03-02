@@ -317,7 +317,6 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
                     }
                 });
                 components_2.RequireJS.require(['howler'], function (howler) {
-                    console.log("howler", howler);
                     self.Howler = howler.Howler;
                     self.Howl = howler.Howl;
                     resolve(howler);
