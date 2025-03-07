@@ -192,13 +192,9 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
     const moduleDir = components_2.application.currentModuleDir;
     const REEL_WIDTH = 90;
     const SYMBOL_SIZE = 80;
-    let reels = [];
-    let anotherSlot = [];
     let slotTextures = [];
-    let anotherSlotTextures = [];
     let reelContainer;
     let reel;
-    const tweening = [];
     let ScomSlot = class ScomSlot extends components_2.Module {
         constructor(parent, options) {
             super(parent, options);
@@ -207,6 +203,8 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
             this.win = 0;
             this.playing = false;
             this.running = false;
+            this.tweening = [];
+            this.reels = [];
             this.loadLib(moduleDir);
         }
         get isPreview() {
@@ -214,8 +212,6 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
         }
         set isPreview(value) {
             this._isPreview = value;
-            // if (this.pnlProduct) this.pnlProduct.cursor = value || !this.model.isLoggedIn ? "default" : "pointer";
-            // if (this.btnAddToCart) this.btnAddToCart.enabled = !value && this.model.isLoggedIn;
         }
         getConfigurators() {
             return this.model.getConfigurators();
@@ -245,7 +241,7 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
                 complete: oncomplete,
                 start: Date.now()
             };
-            tweening.push(tween);
+            this.tweening.push(tween);
             return tween;
         }
         lerp(a1, a2, t) {
@@ -267,8 +263,8 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
             this.app.ticker.add(delta => {
                 const now = Date.now();
                 const remove = [];
-                for (var i = 0; i < tweening.length; i++) {
-                    const t = tweening[i];
+                for (let i = 0; i < this.tweening.length; i++) {
+                    const t = this.tweening[i];
                     const phase = Math.min(1, (now - t.start) / t.time);
                     t.object[t.property] = this.lerp(t.propertyBeginValue, t.target, t.easing(phase));
                     if (t.change)
@@ -280,13 +276,13 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
                         remove.push(t);
                     }
                 }
-                for (var i = 0; i < remove.length; i++) {
-                    tweening.splice(tweening.indexOf(remove[i]), 1);
+                for (let i = 0; i < remove.length; i++) {
+                    this.tweening.splice(this.tweening.indexOf(remove[i]), 1);
                 }
             });
             this.app.ticker.add(delta => {
                 //Update the slots.
-                for (const r of reels) {
+                for (const r of this.reels) {
                     //Update blur filter y amount based on speed.
                     //This would be better if calculated with time in mind also. Now blur depends on frame rate.
                     r.blur.blurY = (r.position - r.previousPosition) * 8;
@@ -451,7 +447,6 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
                     previousPosition: 0,
                     blur: new scom_pixi_1.BlurFilter()
                 };
-                //let newposition = reel.reelContainer.getChildIndex;
                 reel.blur.blurX = 0;
                 reel.blur.blurY = 0;
                 rc.filters = [reel.blur];
@@ -465,7 +460,7 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
                     reel.symbols.push(symbol);
                     rc.addChild(symbol);
                 }
-                reels.push(reel);
+                this.reels.push(reel);
             }
             this.app.stage.addChild(reelContainer);
             /* TODO:
@@ -484,8 +479,6 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
             bottom.rect(0, 240 + margin, this.app.screen.width, margin);
             bottom.fill('#000000');
             bottom.alpha = 1;
-            // bottom.beginFill(0, 1);
-            // bottom.drawRect(0, 240 + margin, this.app.screen.width, margin);
             //Add text Style properties
             const style = new scom_pixi_1.TextStyle({
                 fontFamily: 'Arial',
@@ -494,7 +487,6 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
                 fontWeight: 'bold',
                 fill: '#FFFFFF',
                 // fill: [new Color('#FFFFFF').toNumber(), new Color('#00FF99').toNumber()], // gradient
-                // stroke: '#4a1850',
                 stroke: {
                     color: '#4A1850',
                     width: 5
@@ -558,11 +550,10 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
                 });
                 sound.play();
             }
-            ;
-            for (let i = 0; i < reels.length; i++) {
-                const r = reels[i];
+            for (let i = 0; i < this.reels.length; i++) {
+                const r = this.reels[i];
                 const extra = Math.floor(Math.random() * 3);
-                this.tweenTo(r, "position", r.position + 10 + i * 5 + extra, 2500 + i * 600 + extra * 600, this.backout(0.6), null, i == reels.length - 1 ? this.reelsComplete.bind(this) : null);
+                this.tweenTo(r, "position", r.position + 10 + i * 5 + extra, 2500 + i * 600 + extra * 600, this.backout(0.6), null, i == this.reels.length - 1 ? this.reelsComplete.bind(this) : null);
             }
         }
         //Reels done handler.

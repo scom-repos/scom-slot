@@ -134,6 +134,8 @@ declare module "@scom/scom-slot" {
         private headerText;
         private Howler;
         private Howl;
+        private tweening;
+        private reels;
         constructor(parent?: Container, options?: any);
         get isPreview(): boolean;
         set isPreview(value: boolean);
