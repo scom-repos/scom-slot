@@ -19,9 +19,7 @@ import {
     TextStyle,
     Loader,
     BlurFilter,
-    AssetExtension,
     Color
-
 } from "@scom/scom-pixi";
 import { SlotModel } from "./model";
 
@@ -39,13 +37,9 @@ declare global {
 const moduleDir = application.currentModuleDir;
 const REEL_WIDTH = 90;
 const SYMBOL_SIZE = 80;
-let reels = [];
-let anotherSlot = [];
 let slotTextures = [];
-let anotherSlotTextures = [];
 let reelContainer;
 let reel;
-const tweening = [];
 
 @customElements('i-scom-slot')
 export class ScomSlot extends Module {
@@ -65,6 +59,8 @@ export class ScomSlot extends Module {
     private headerText: Text;
     private Howler: any;
     private Howl: any;
+    private tweening = [];
+    private reels = [];
 
     constructor(parent?: Container, options?: any) {
         super(parent, options);
@@ -77,8 +73,6 @@ export class ScomSlot extends Module {
 
     set isPreview(value: boolean) {
         this._isPreview = value;
-        // if (this.pnlProduct) this.pnlProduct.cursor = value || !this.model.isLoggedIn ? "default" : "pointer";
-        // if (this.btnAddToCart) this.btnAddToCart.enabled = !value && this.model.isLoggedIn;
     }
 
     getConfigurators() {
@@ -114,7 +108,7 @@ export class ScomSlot extends Module {
             start: Date.now()
         };
 
-        tweening.push(tween);
+        this.tweening.push(tween);
         return tween;
     }
 
@@ -139,8 +133,8 @@ export class ScomSlot extends Module {
         this.app.ticker.add(delta => {
             const now = Date.now();
             const remove = [];
-            for (var i = 0; i < tweening.length; i++) {
-                const t = tweening[i];
+            for (let i = 0; i < this.tweening.length; i++) {
+                const t = this.tweening[i];
                 const phase = Math.min(1, (now - t.start) / t.time);
 
                 t.object[t.property] = this.lerp(t.propertyBeginValue, t.target, t.easing(phase));
@@ -152,13 +146,13 @@ export class ScomSlot extends Module {
                     remove.push(t);
                 }
             }
-            for (var i = 0; i < remove.length; i++) {
-                tweening.splice(tweening.indexOf(remove[i]), 1);
+            for (let i = 0; i < remove.length; i++) {
+                this.tweening.splice(this.tweening.indexOf(remove[i]), 1);
             }
         });
         this.app.ticker.add(delta => {
             //Update the slots.
-            for (const r of reels) {
+            for (const r of this.reels) {
                 //Update blur filter y amount based on speed.
                 //This would be better if calculated with time in mind also. Now blur depends on frame rate.
                 r.blur.blurY = (r.position - r.previousPosition) * 8;
@@ -363,7 +357,6 @@ export class ScomSlot extends Module {
                 blur: new BlurFilter()
             };
 
-            //let newposition = reel.reelContainer.getChildIndex;
             reel.blur.blurX = 0;
             reel.blur.blurY = 0;
             rc.filters = [reel.blur];
@@ -378,7 +371,7 @@ export class ScomSlot extends Module {
                 reel.symbols.push(symbol);
                 rc.addChild(symbol);
             }
-            reels.push(reel);
+            this.reels.push(reel);
         }
         this.app.stage.addChild(reelContainer);
 
@@ -399,8 +392,6 @@ export class ScomSlot extends Module {
         bottom.rect(0, 240 + margin, this.app.screen.width, margin);
         bottom.fill('#000000')
         bottom.alpha = 1;
-        // bottom.beginFill(0, 1);
-        // bottom.drawRect(0, 240 + margin, this.app.screen.width, margin);
 
         //Add text Style properties
         const style = new TextStyle({
@@ -410,7 +401,6 @@ export class ScomSlot extends Module {
             fontWeight: 'bold',
             fill: '#FFFFFF',
             // fill: [new Color('#FFFFFF').toNumber(), new Color('#00FF99').toNumber()], // gradient
-            // stroke: '#4a1850',
             stroke: {
                 color: '#4A1850',
                 width: 5
@@ -493,12 +483,11 @@ export class ScomSlot extends Module {
             
             sound.play();
         }
-        ;
 
-        for (let i = 0; i < reels.length; i++) {
-            const r = reels[i];
+        for (let i = 0; i < this.reels.length; i++) {
+            const r = this.reels[i];
             const extra = Math.floor(Math.random() * 3);
-            this.tweenTo(r, "position", r.position + 10 + i * 5 + extra, 2500 + i * 600 + extra * 600, this.backout(0.6), null, i == reels.length - 1 ? this.reelsComplete.bind(this) : null);
+            this.tweenTo(r, "position", r.position + 10 + i * 5 + extra, 2500 + i * 600 + extra * 600, this.backout(0.6), null, i == this.reels.length - 1 ? this.reelsComplete.bind(this) : null);
         }
     }
 
