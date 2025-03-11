@@ -1,64 +1,30 @@
-/// <amd-module name="@scom/scom-slot/translations.json.ts" />
-declare module "@scom/scom-slot/translations.json.ts" {
-    const _default: {
-        en: {
-            slot_machine: string;
-        };
-        "zh-hant": {
-            slot_machine: string;
-        };
-        vi: {
-            slot_machine: string;
-        };
-    };
-    export default _default;
-}
-/// <amd-module name="@scom/scom-slot/interface.ts" />
-declare module "@scom/scom-slot/interface.ts" {
-    export interface ISlotConfig {
-        id?: string;
-        slotName?: string;
-    }
-    export interface ISlotInfo {
-        config: ISlotConfig;
-        slotName: string;
-    }
-}
-/// <amd-module name="@scom/scom-slot/configInput.tsx" />
-declare module "@scom/scom-slot/configInput.tsx" {
-    import { ControlElement, Module } from '@ijstech/components';
-    import { ISlotConfig } from "@scom/scom-slot/interface.ts";
-    global {
-        namespace JSX {
-            interface IntrinsicElements {
-                ['i-scom-slot--config-input']: ControlElement;
-            }
-        }
-    }
-    export class ScomSlotConfigInput extends Module {
-        private edtSlotName;
-        private timeout;
-        private config;
-        getData(): {
-            slotName: any;
-        };
-        setData(data: ISlotConfig): Promise<void>;
-        private handleSlotNameChanged;
-        init(): Promise<void>;
-        render(): any;
-    }
-}
 /// <amd-module name="@scom/scom-slot/formSchema.ts" />
 declare module "@scom/scom-slot/formSchema.ts" {
-    import { ScomSlotConfigInput } from "@scom/scom-slot/configInput.tsx";
-    const _default_1: {
+    const _default: {
         dataSchema: {
             type: string;
             properties: {
-                config: {
+                slotName: {
                     title: string;
                     type: string;
                     required: boolean;
+                };
+                defaultStake: {
+                    title: string;
+                    type: string;
+                    enum: string[];
+                };
+                firstImage: {
+                    title: string;
+                    type: string;
+                };
+                secondImage: {
+                    title: string;
+                    type: string;
+                };
+                thirdImage: {
+                    title: string;
+                    type: string;
                 };
             };
         };
@@ -69,25 +35,46 @@ declare module "@scom/scom-slot/formSchema.ts" {
                 scope: string;
             }[];
         };
-        customControls(): {
-            "#/properties/config": {
-                render: () => ScomSlotConfigInput;
-                getData: (control: ScomSlotConfigInput) => {
-                    slotName: any;
-                };
-                setData: (control: ScomSlotConfigInput, value: string, rowData: any) => Promise<void>;
-            };
-        };
     };
-    export default _default_1;
+    export default _default;
+}
+/// <amd-module name="@scom/scom-slot/interface.ts" />
+declare module "@scom/scom-slot/interface.ts" {
+    export interface ISlotInfo {
+        id?: string;
+        slotName?: string;
+        firstImage?: string;
+        secondImage?: string;
+        thirdImage?: string;
+        defaultStake?: number;
+    }
 }
 /// <amd-module name="@scom/scom-slot/model.ts" />
 declare module "@scom/scom-slot/model.ts" {
+    import { Module } from "@ijstech/components";
     import { ISlotInfo } from "@scom/scom-slot/interface.ts";
+    export const ROWS = 3;
+    export const COLUMNS = 3;
+    export const DEFAULT_STAKE = 1;
+    export const REEL_WIDTH = 90;
+    export const SYMBOL_SIZE = 80;
+    export const PADDING_BLOCK = 4;
+    export const DEFAULT_WIDTH = 640;
+    export const DEFAULT_HEIGHT = 360;
     export class SlotModel {
-        private _tag;
-        updateUIBySetData: () => Promise<void>;
+        private module;
         private _data;
+        updateUIBySetData: () => Promise<void>;
+        slotTextures: any[];
+        reel: any;
+        tweening: any[];
+        reels: any[];
+        balance: number;
+        stake: number;
+        win: number;
+        running: boolean;
+        Howl: any;
+        constructor(module: Module);
         getConfigurators(): {
             name: string;
             target: string;
@@ -97,17 +84,70 @@ declare module "@scom/scom-slot/model.ts" {
             getTag: any;
             setTag: any;
         }[];
-        setData(value: any): Promise<void>;
+        setData(value: ISlotInfo): Promise<void>;
         getData(): ISlotInfo;
         getTag(): any;
         setTag(value: any): void;
         private getActions;
         get isLoggedIn(): boolean;
+        loadLib(moduleDir: string): Promise<unknown>;
+        updateBalance(): void;
+        addStake(): void;
+        minusStake(): void;
+        reduceBalance(): void;
+        tweenTo(object: any, property: any, target: any, time: number, easing: any, onchange: any, oncomplete: any): {
+            object: any;
+            property: any;
+            propertyBeginValue: any;
+            target: any;
+            easing: any;
+            time: number;
+            change: any;
+            complete: any;
+            start: number;
+        };
+        lerp(a1: number, a2: number, t: number): number;
+        startPlay(moduleDir: string, callback?: () => void): void;
+        reelsComplete(callback?: () => void): void;
+        backout(amount: number): (t: number) => number;
+        updateTweeting(): void;
+        updateReels(): void;
     }
+}
+/// <amd-module name="@scom/scom-slot/translations.json.ts" />
+declare module "@scom/scom-slot/translations.json.ts" {
+    const _default_1: {
+        en: {
+            slot_machine: string;
+            slot_machine_name: string;
+            default_stake: string;
+            first_image_url: string;
+            second_image_url: string;
+            third_image_url: string;
+        };
+        "zh-hant": {
+            slot_machine: string;
+            slot_machine_name: string;
+            default_stake: string;
+            first_image_url: string;
+            second_image_url: string;
+            third_image_url: string;
+        };
+        vi: {
+            slot_machine: string;
+            slot_machine_name: string;
+            default_stake: string;
+            first_image_url: string;
+            second_image_url: string;
+            third_image_url: string;
+        };
+    };
+    export default _default_1;
 }
 /// <amd-module name="@scom/scom-slot" />
 declare module "@scom/scom-slot" {
     import { ControlElement, Container, Module } from "@ijstech/components";
+    import { ISlotInfo } from "@scom/scom-slot/interface.ts";
     interface ScomSlotElement extends ControlElement {
     }
     global {
@@ -121,24 +161,16 @@ declare module "@scom/scom-slot" {
         private model;
         private pnlCanvas;
         private app;
-        private balance;
-        private stake;
-        private win;
-        private playing;
-        private blue;
-        private green;
-        private orange;
-        private loader;
-        private running;
-        private _isPreview;
         private headerText;
-        private Howler;
-        private Howl;
-        private tweening;
-        private reels;
+        private stackText;
+        private winText;
+        private balanceText;
+        private reelContainer;
+        private buttonSpin;
+        tag: {};
         constructor(parent?: Container, options?: any);
-        get isPreview(): boolean;
-        set isPreview(value: boolean);
+        static create(options?: ScomSlotElement, parent?: Container): Promise<ScomSlot>;
+        private initModel;
         getConfigurators(): {
             name: string;
             target: string;
@@ -148,31 +180,44 @@ declare module "@scom/scom-slot" {
             getTag: any;
             setTag: any;
         }[];
-        addStake(): void;
-        minusStake(): void;
-        reduceBalance(): void;
-        tweenTo(object: any, property: any, target: any, time: any, easing: any, onchange: any, oncomplete: any): {
-            object: any;
-            property: any;
-            propertyBeginValue: any;
-            target: any;
-            easing: any;
-            time: any;
-            change: any;
-            complete: any;
-            start: number;
+        getConfigJson(): {
+            en: {
+                slot_machine: string;
+                slot_machine_name: string;
+                default_stake: string;
+                first_image_url: string;
+                second_image_url: string;
+                third_image_url: string;
+            };
+            "zh-hant": {
+                slot_machine: string;
+                slot_machine_name: string;
+                default_stake: string;
+                first_image_url: string;
+                second_image_url: string;
+                third_image_url: string;
+            };
+            vi: {
+                slot_machine: string;
+                slot_machine_name: string;
+                default_stake: string;
+                first_image_url: string;
+                second_image_url: string;
+                third_image_url: string;
+            };
         };
-        lerp(a1: any, a2: any, t: any): number;
-        static create(options?: ScomSlotElement, parent?: Container): Promise<ScomSlot>;
-        init(): Promise<void>;
-        loadLib(moduleDir: string): Promise<unknown>;
-        loadAsset(): Promise<void>;
-        onAssetsLoaded(): void;
-        startPlay(): void;
-        reelsComplete(): void;
-        backout(amount: any): (t: any) => number;
-        render(): any;
-        getData(): import("@scom/scom-slot/interface.ts").ISlotInfo;
+        getData(): ISlotInfo;
+        setData(value: ISlotInfo): Promise<void>;
+        getTag(): {};
+        setTag(value: any): Promise<void>;
         private updateUIBySetData;
+        updateBalance(): void;
+        private loadAsset;
+        private updateSlot;
+        private updateContainer;
+        private initSlot;
+        private isEmptyData;
+        init(): Promise<void>;
+        render(): any;
     }
 }

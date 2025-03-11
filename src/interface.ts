@@ -1,11 +1,10 @@
-export interface ISlotConfig {
+export interface ISlotInfo {
     id?: string;
     slotName?: string;
-}
-
-export interface ISlotInfo {
-    config: ISlotConfig;
-    slotName: string;
+    firstImage?: string;
+    secondImage?: string;
+    thirdImage?: string;
+    defaultStake?: number;
 }
 
 
