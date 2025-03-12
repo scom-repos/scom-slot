@@ -1,7 +1,7 @@
 {
     "name": "@scom/scom-slot",
     "type": "widget",
-    "version": "0.1.10",
+    "version": "0.1.11",
     "dependencies": [
         "@ijstech/components",
         "@scom/scom-pixi"
