@@ -3,25 +3,24 @@ import {
     customElements,
     Container,
     Module,
-    Panel,
     application,
     VStack,
-    RequireJS
+    customModule,
 } from "@ijstech/components";
 import {
     Application,
-    Assets,
-    Texture,
     Graphics,
     Container as PIXIContainer,
     Sprite,
     Text,
     TextStyle,
-    Loader,
     BlurFilter,
-    Color
+    Assets,
+    Texture,
 } from "@scom/scom-pixi";
-import { SlotModel } from "./model";
+import { COLUMNS, DEFAULT_HEIGHT, DEFAULT_WIDTH, PADDING_BLOCK, REEL_WIDTH, ROWS, SlotModel, SYMBOL_SIZE } from "./model";
+import { ISlotInfo } from "./interface";
+import translations from "./translations.json";
 
 interface ScomSlotElement extends ControlElement {
 
@@ -35,85 +34,24 @@ declare global {
     }
 }
 const moduleDir = application.currentModuleDir;
-const REEL_WIDTH = 90;
-const SYMBOL_SIZE = 80;
-let slotTextures = [];
-let reelContainer;
-let reel;
 
+@customModule
 @customElements('i-scom-slot')
 export class ScomSlot extends Module {
     private model: SlotModel;
     private pnlCanvas: VStack;
     private app: Application;
-    private balance: number = 500;
-    private stake: number = 1;
-    private win: number = 0;
-    private playing: boolean = false;
-    private blue;
-    private green;
-    private orange;
-    private loader: Loader;
-    private running: boolean = false;
-    private _isPreview: boolean;
     private headerText: Text;
-    private Howler: any;
-    private Howl: any;
-    private tweening = [];
-    private reels = [];
+    private stackText: Text;
+    private winText: Text;
+    private balanceText: Text;
+    private reelContainer: PIXIContainer;
+    private buttonSpin: Sprite;
+    tag = {};
 
     constructor(parent?: Container, options?: any) {
         super(parent, options);
-        this.loadLib(moduleDir);
-    }
-
-    get isPreview() {
-        return this._isPreview;
-    }
-
-    set isPreview(value: boolean) {
-        this._isPreview = value;
-    }
-
-    getConfigurators() {
-        return this.model.getConfigurators()
-    }
-
-    addStake() {
-        if (this.stake >= 1 && this.stake <= 2) {
-            this.stake++;
-        }
-    }
-
-    minusStake() {
-        if (this.stake > 1) {
-            this.stake--;
-        }
-    }
-
-    reduceBalance() {
-        this.balance = this.balance - this.stake;
-    }
-
-    tweenTo(object, property, target, time, easing, onchange, oncomplete) {
-        const tween = {
-            object,
-            property,
-            propertyBeginValue: object[property],
-            target,
-            easing,
-            time,
-            change: onchange,
-            complete: oncomplete,
-            start: Date.now()
-        };
-
-        this.tweening.push(tween);
-        return tween;
-    }
-
-    lerp(a1, a2, t) {
-        return a1 * (1 - t) + a2 * t;
+        this.initModel();
     }
 
     static async create(options?: ScomSlotElement, parent?: Container) {
@@ -122,107 +60,56 @@ export class ScomSlot extends Module {
         return self;
     }
 
-    async init() {
-        super.init();
-        this.app = new Application();
-        this.model = new SlotModel();
-        this.model.updateUIBySetData = this.updateUIBySetData.bind(this);
-        await this.app.init({width: 640, height: 360, background: 'transparent'})
-        this.pnlCanvas.appendChild(this.app.canvas);
-        await this.loadAsset();
-        this.app.ticker.add(delta => {
-            const now = Date.now();
-            const remove = [];
-            for (let i = 0; i < this.tweening.length; i++) {
-                const t = this.tweening[i];
-                const phase = Math.min(1, (now - t.start) / t.time);
-
-                t.object[t.property] = this.lerp(t.propertyBeginValue, t.target, t.easing(phase));
-                if (t.change) t.change(t);
-                if (phase == 1) {
-                    t.object[t.property] = t.target;
-                    if (t.complete)
-                        t.complete(t);
-                    remove.push(t);
-                }
-            }
-            for (let i = 0; i < remove.length; i++) {
-                this.tweening.splice(this.tweening.indexOf(remove[i]), 1);
-            }
-        });
-        this.app.ticker.add(delta => {
-            //Update the slots.
-            for (const r of this.reels) {
-                //Update blur filter y amount based on speed.
-                //This would be better if calculated with time in mind also. Now blur depends on frame rate.
-                r.blur.blurY = (r.position - r.previousPosition) * 8;
-                r.previousPosition = r.position;
-
-                //Update symbol positions on reel.
-                for (let j = 0; j < r.symbols.length; j++) {
-                    const s = r.symbols[j];
-                    const prevy = s.y;
-                    s.y = (r.position + j) % r.symbols.length * SYMBOL_SIZE - SYMBOL_SIZE;
-                    if (s.y < 0 && prevy > SYMBOL_SIZE) {
-                        //Detect going over and swap a texture.
-                        //This should in proper product be determined from some logical reel.
-                        s.texture = slotTextures[Math.floor(Math.random() * slotTextures.length)];
-                        s.scale.x = s.scale.y = Math.min(SYMBOL_SIZE / s.texture.width, SYMBOL_SIZE / s.texture.height);
-                        s.x = Math.round((SYMBOL_SIZE - s.width) / 2);
-                    }
-                }
-            }
-        });
+    private initModel() {
+        if (!this.model) {
+            this.i18n.init({ ...translations });
+            this.model = new SlotModel(this);
+            this.model.loadLib(moduleDir);
+        }
     }
 
-    async loadLib(moduleDir: string) {
-        let self = this;
-        return new Promise((resolve, reject) => {
-            RequireJS.config({
-                baseUrl: `${moduleDir}/lib`,
-                paths: {
-                    'howler': 'howler',
-                }
-            })
-            RequireJS.require(['howler'], function (howler: any) {
-                self.Howler = howler.Howler;
-                self.Howl = howler.Howl;
-                resolve(howler);
-            });
-        })
+    getConfigurators() {
+        this.initModel();
+        return this.model.getConfigurators();
     }
 
-    async loadAsset() {
-        // const imageDelivery = {
-        //     extension: ExtensionType.LoadParser,
-        //     test: (url) => url.startsWith('https://imagedelivery.net'),
-        //     async load(src) {
-        //         return new Promise((resolve, reject) => {
-        //             const img = new Image()
-        //             img.crossOrigin = 'anonymous'
-        //             img.onload = () => resolve(Texture.from(img))
-        //             img.onerror = reject
-        //             img.src = src
-        //         })
-        //     },
-        // }
+    getConfigJson() {
+        return translations;
+    }
 
-        // this.loader = new Loader({);
-        // const assets = await this.loader.load([
-        //     `${moduleDir}/assets/images/gem_blue.png`,
-        //     `${moduleDir}/assets/images/gem_green.png`,
-        //     `${moduleDir}/assets/images/gem_orange.png`,
-        //     `${moduleDir}/assets/images/spin.png`,
-        //     `${moduleDir}/assets/images/BTN_Spin_deactivated.png`,
-        //     `${moduleDir}/assets/images/coin.png`,
-        //     `${moduleDir}/assets/images/leftArrow.png`,
-        //     `${moduleDir}/assets/images/rightArrow.png`,
-        //     `${moduleDir}/assets/images/background.png`
-        // ]);
+    getData() {
+        return this.model.getData();
+    }
+
+    async setData(value: ISlotInfo) {
+        this.model.setData(value);
+    }
+
+    getTag() {
+        return this.tag;
+    }
+
+    async setTag(value: any) {
+        this.model.setTag(value);
+    }
+
+    private async updateUIBySetData() {
+        await this.updateSlot();
+    }
+
+    updateBalance() {
+        this.model.updateBalance();
+    }
+
+    private async loadAsset() {
+        const { firstImage, secondImage, thirdImage } = this.getData();
+        const _firstImage = firstImage || `${moduleDir}/assets/images/gem_blue.png`;
+        const _secondImage = secondImage || `${moduleDir}/assets/images/gem_green.png`;
+        const _thirdImage = thirdImage || `${moduleDir}/assets/images/gem_orange.png`;
         await Assets.load([
-            `${moduleDir}/assets/images/gem_blue.png`,
-            `${moduleDir}/assets/images/gem_green.png`,
-            `${moduleDir}/assets/images/gem_orange.png`,
+            _firstImage,
+            _secondImage,
+            _thirdImage,
             `${moduleDir}/assets/images/spin.png`,
             `${moduleDir}/assets/images/BTN_Spin_deactivated.png`,
             `${moduleDir}/assets/images/coin.png`,
@@ -230,21 +117,74 @@ export class ScomSlot extends Module {
             `${moduleDir}/assets/images/rightArrow.png`,
             `${moduleDir}/assets/images/background.png`
         ])
-
-        this.blue = Texture.from(`${moduleDir}/assets/images/gem_blue.png`);
-        this.green = Texture.from(`${moduleDir}/assets/images/gem_green.png`);
-        this.orange = Texture.from(`${moduleDir}/assets/images/gem_orange.png`);
-        this.onAssetsLoaded();
+        const firstSymbol = Texture.from(_firstImage);
+        const secondSymbol = Texture.from(_secondImage);
+        const thirdSymbol = Texture.from(_thirdImage);
+        this.model.slotTextures = [
+            firstSymbol,
+            secondSymbol,
+            thirdSymbol
+        ];
     }
 
-    onAssetsLoaded() {
+    private async updateSlot() {
+        await this.loadAsset();
+        const { slotName } = this.getData() || {};
+        if (this.headerText) {
+            this.headerText.text = slotName || this.i18n.get('$slot_machine');
+            this.stackText.text = this.model.stake;
+            this.buttonSpin.alpha = this.model.balance < this.model.stake ? 0.5 : 1;
+            this.updateContainer();
+        }
+    }
 
-        //Create different slot symbols.
-        slotTextures = [
-            this.blue,
-            this.green,
-            this.orange
-        ];
+    private updateContainer() {
+        this.model.reels = [];
+        if (this.reelContainer) {
+            try {
+                this.app.stage.removeChild(this.reelContainer);
+            } catch { }
+        }
+        this.reelContainer = new PIXIContainer();
+        const margin = (this.app.screen.height - SYMBOL_SIZE * 3) / 2;
+        this.reelContainer.y = margin + 2.5;
+        this.reelContainer.x = 200;
+        this.reelContainer.zIndex = 0;
+        for (let i = 0; i < COLUMNS; i++) {
+            const rc = new PIXIContainer();
+            rc.x = i * REEL_WIDTH;
+            this.reelContainer.addChild(rc);
+
+            this.model.reel = {
+                container: rc,
+                symbols: [],
+                position: 0,
+                previousPosition: 0,
+                blur: new BlurFilter()
+            };
+
+            this.model.reel.blur.blurX = 0;
+            this.model.reel.blur.blurY = 0;
+            rc.filters = [this.model.reel.blur];
+
+            //Build the symbols
+            for (let j = 0; j < (ROWS + 1); j++) {
+                const symbol = new Sprite(this.model.slotTextures[Math.floor(Math.random() * this.model.slotTextures.length)]);
+                //Scale the symbol to fit symbol area.
+                symbol.y = j * SYMBOL_SIZE;
+                symbol.scale.x = symbol.scale.y = Math.min(SYMBOL_SIZE / symbol.width, SYMBOL_SIZE / symbol.height);
+                symbol.x = Math.round((SYMBOL_SIZE - symbol.width) / 2);
+                symbol.height = SYMBOL_SIZE - PADDING_BLOCK;
+                this.model.reel.symbols.push(symbol);
+                rc.addChild(symbol);
+            }
+            this.model.reels.push(this.model.reel);
+        }
+        this.app.stage.addChild(this.reelContainer);
+    }
+
+    private async initSlot() {
+        await this.loadAsset();
 
         //container for footer items
         const footerContainer = new PIXIContainer();
@@ -276,14 +216,12 @@ export class ScomSlot extends Module {
         buttonsHolder.y = 0;
         const makeImageButton = (image, audioMP3, audioOGG, x, y, scale) => {
             const button = Sprite.from(image);
-            const sound = new this.Howl({
+            const sound = new this.model.Howl({
                 src: [audioMP3, audioOGG]
             });
 
             (button as any).sound = sound;
             button.interactive = true;
-            // button.buttonMode = true;
-            // button.on('pointerdown', event => sound.play());
             buttonsHolder.addChild(button);
             button.x = x;
             button.y = y;
@@ -309,71 +247,42 @@ export class ScomSlot extends Module {
             0.05
         );
         //Add image sprite, sound, location and scale the spinButton button
-        const buttonActive = makeImageButton(
+        this.buttonSpin = makeImageButton(
             `${moduleDir}/assets/images/spin.png`,
             `${moduleDir}/assets/sounds/mp3/zapsplat_foley_money_pouch_fabric_coins_down_on_surface_006_15052.mp3`,
             `${moduleDir}/assets/sounds/ogg/zapsplat_foley_money_pouch_fabric_coins_down_on_surface_006_15052.mp3`,
-            450,
+            460,
             235,
             0.2
         );
 
         //check for event on click on rightArrow button and call AddStake function
         rightArrow.addListener("pointerdown", () => {
-            this.addStake();
+            this.model.addStake();
             // pdate  PIXI stack text on screen
-            stackText.text = this.stake;
+            this.stackText.text = this.model.stake;
         });
 
         //check for event on click on leftArrow button and call MinusStake function
         leftArrow.addListener("pointerdown", () => {
-            this.minusStake();
-            footerContainer.addChild(stackText);
+            this.model.minusStake();
             //update  PIXI text on screen
-            stackText.text = this.stake;
+            this.stackText.text = this.model.stake;
         });
 
         //check for event on spin button
-        buttonActive.addListener('pointerdown', () => {
-            this.startPlay();
+        this.buttonSpin.addListener('pointerdown', () => {
+            this.buttonSpin.alpha = 0.5;
+            this.model.startPlay(moduleDir);
             //Reduce balance on click depending on bet amount
             //Add changes on canvas environment
-            balanceText.text = this.balance;
-            console.log(`button clicked`);
+            this.balanceText.text = this.model.balance;
+            this.buttonSpin.alpha = this.model.balance < this.model.stake ? 0.5 : 1;
+            console.log('button clicked');
         });
 
-        //Build the reels
-        reelContainer = new PIXIContainer();
-        for (let i = 0; i < 3; i++) {
-            const rc = new PIXIContainer();
-            rc.x = i * REEL_WIDTH;
-            reelContainer.addChild(rc);
-
-            reel = {
-                container: rc,
-                symbols: [],
-                position: 0,
-                previousPosition: 0,
-                blur: new BlurFilter()
-            };
-
-            reel.blur.blurX = 0;
-            reel.blur.blurY = 0;
-            rc.filters = [reel.blur];
-
-            //Build the symbols
-            for (let j = 0; j < 3; j++) {
-                const symbol = new Sprite(slotTextures[Math.floor(Math.random() * slotTextures.length)]);
-                //Scale the symbol to fit symbol area.
-                symbol.y = j * SYMBOL_SIZE;
-                symbol.scale.x = symbol.scale.y = Math.min(SYMBOL_SIZE / symbol.width, SYMBOL_SIZE / symbol.height);
-                symbol.x = Math.round((SYMBOL_SIZE - symbol.width) / 9);
-                reel.symbols.push(symbol);
-                rc.addChild(symbol);
-            }
-            this.reels.push(reel);
-        }
-        this.app.stage.addChild(reelContainer);
+        // Build the reels
+        this.updateContainer();
 
         /* TODO:
             -change style of top and bottom canvas background
@@ -381,15 +290,14 @@ export class ScomSlot extends Module {
             - responsive on all devices
         */
 
-        //Build top & bottom covers and position reelContainer
-        const margin = 50;
-        reelContainer.y = margin * 2.8;
-        reelContainer.x = 200;
+        //Build top & bottom covers
+        const margin = (this.app.screen.height - SYMBOL_SIZE * 3) / 2;
         const top = new Graphics();
+        top.zIndex = 1;
         top.rect(0, 0, this.app.screen.width, margin)
         top.fill('#FF3300');
         const bottom = new Graphics();
-        bottom.rect(0, 240 + margin, this.app.screen.width, margin);
+        bottom.rect(0, SYMBOL_SIZE * 3 + margin - 15, this.app.screen.width, margin + 15);
         bottom.fill('#000000')
         bottom.alpha = 1;
 
@@ -415,30 +323,30 @@ export class ScomSlot extends Module {
             wordWrapWidth: 300
         });
 
-        const { config, slotName } = this.getData() || {};
+        const { slotName } = this.getData() || {};
         //Add header text
-        this.headerText = new Text(config?.slotName || 'Slot Machine', style);
+        this.headerText = new Text(slotName || this.i18n.get('$slot_machine'), style);
         this.headerText.x = Math.round((top.width - this.headerText.width) / 2);
         this.headerText.y = Math.round((margin - this.headerText.height) / 2);
         top.addChild(this.headerText);
 
         //Stack Selector Text between arrow buttons
-        let stackText = new Text(`${this.stake}`, style);
-        stackText.x = (this.app.screen.width / 2 - 10);
-        stackText.y = 295;
-        footerContainer.addChild(stackText);
+        this.stackText = new Text(`${this.model.stake}`, style);
+        this.stackText.x = (this.app.screen.width / 2 - 15);
+        this.stackText.y = 295;
+        footerContainer.addChild(this.stackText);
 
         //Add win text to the canvas
-        let winText = new Text(`${this.win}`, style);
-        winText.x = 100;
-        winText.y = 295;
-        footerContainer.addChild(winText);
+        this.winText = new Text(`${this.model.win}`, style);
+        this.winText.x = 100;
+        this.winText.y = 295;
+        footerContainer.addChild(this.winText);
 
         //Add balance text to the canvas
-        let balanceText = new Text(`${this.balance}`, style);
-        balanceText.x = 535;
-        balanceText.y = 7;
-        top.addChild(balanceText);
+        this.balanceText = new Text(`${this.model.balance}`, style);
+        this.balanceText.x = 535;
+        this.balanceText.y = 7;
+        top.addChild(this.balanceText);
 
         this.app.stage.addChild(top);
         this.app.stage.addChild(coins);
@@ -448,69 +356,57 @@ export class ScomSlot extends Module {
             graphicsOne,
             graphicsTwo,
             buttonsHolder,
-            buttonActive,
-            stackText,
-            winText);
+            this.buttonSpin,
+            this.stackText,
+            this.winText
+        );
         footerContainer.x = 0;
         footerContainer.y = 20;
+        footerContainer.zIndex = 1;
 
-        this.running = false;
-
-
-        //function to get symbols index/position
-        /*     Response balance = "98.80" stake = "1.20" win = "0.00" >
-                <SymbolGrid column_id="0" symbols="2,2,1" />
-                <SymbolGrid column_id="1" symbols="1,2,1" />
-                <SymbolGrid column_id="2" symbols="1,0,1" />
-        </Response > */
-
-        // Listen for animate update.
-
+        this.model.running = false;
     }
 
-    //Function to start playing.
-    startPlay() {
-        console.log('startPlay', this.running)
-        if (this.running) return;
-        this.running = true;
+    private isEmptyData(value: ISlotInfo) {
+        return !value || !value.slotName;
+    }
 
-        this.reduceBalance();
-        // Add sound when reels running is set to true
-        if (this.running) {
-            const sound = new this.Howl({
-                src: [`${moduleDir}/assets/sounds/mp3/arcade-game-fruit-machine-jackpot-002-long.mp3`, `${moduleDir}/assets/sounds/mp3/arcade-game-fruit-machine-jackpot-002-long.mp3`]
-            });
-            
-            sound.play();
+    async init() {
+        super.init();
+        this.app = new Application();
+        this.model.updateUIBySetData = this.updateUIBySetData.bind(this);
+        await this.app.init({ width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT, background: 'transparent' });
+        this.pnlCanvas.appendChild(this.app.canvas);
+        await this.initSlot();
+        const lazyLoad = this.getAttribute('lazyLoad', true, false);
+        if (!lazyLoad) {
+            const slotName = this.getAttribute('slotName', true);
+            const defaultStake = this.getAttribute('defaultStake', true);
+            const firstImage = this.getAttribute('firstImage', true);
+            const secondImage = this.getAttribute('secondImage', true);
+            const thirdImage = this.getAttribute('thirdImage', true);
+            const data = {
+                slotName,
+                defaultStake,
+                firstImage,
+                secondImage,
+                thirdImage,
+            };
+            if (!this.isEmptyData(data)) {
+                await this.setData(data);
+            }
         }
 
-        for (let i = 0; i < this.reels.length; i++) {
-            const r = this.reels[i];
-            const extra = Math.floor(Math.random() * 3);
-            this.tweenTo(r, "position", r.position + 10 + i * 5 + extra, 2500 + i * 600 + extra * 600, this.backout(0.6), null, i == this.reels.length - 1 ? this.reelsComplete.bind(this) : null);
-        }
-    }
-
-    //Reels done handler.
-    reelsComplete() {
-        console.log('reelsComplete')
-        this.running = false;
-    }
-
-    backout(amount) {
-        return (t) => --t * t * ((amount + 1) * t + amount) + 1;
+        this.app.ticker.add(delta => {
+            this.model.updateTweeting();
+        });
+        this.app.ticker.add(delta => {
+            // Update the slots
+            this.model.updateReels();
+        });
     }
 
     render() {
         return <i-vstack id={"pnlCanvas"} height={'100%'} width={'100%'} justifyContent={'center'} alignItems={'center'}></i-vstack>
-    }
-
-    getData() {
-        return this.model.getData();
-    }
-
-    private async updateUIBySetData() {
-        const { config, slotName } = this.getData() || {};
-        this.headerText.text = config.slotName;
     }
 }

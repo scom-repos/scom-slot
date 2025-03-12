@@ -1,40 +1,54 @@
-import { ScomSlotConfigInput } from "./configInput";
-
 export default {
     dataSchema: {
         type: 'object',
         properties: {
-            config: {
-                title: '$slot_machine',
-                type: "object",
+            slotName: {
+                title: '$slot_machine_name',
+                type: 'string',
                 required: true
+            },
+            defaultStake: {
+                title: '$default_stake',
+                type: 'string', // cbb form doesnt support number because of i18n
+                enum: ['1', '2', '3']
+            },
+            firstImage: {
+                title: '$first_image_url',
+                type: 'string'
+            },
+            secondImage: {
+                title: '$second_image_url',
+                type: 'string'
+            },
+            thirdImage: {
+                title: '$third_image_url',
+                type: 'string'
             }
         }
     },
     uiSchema: {
-        type: "VerticalLayout",
+        type: 'VerticalLayout',
         elements: [
             {
-                type: "Control",
-                scope: "#/properties/config"
+                type: 'Control',
+                scope: '#/properties/slotName'
             },
-        ]
-    },
-    customControls() {
-        return {
-            "#/properties/config": {
-                render: () => {
-                    const communityProductInput = new ScomSlotConfigInput();
-                    return communityProductInput;
-                },
-                getData: (control: ScomSlotConfigInput) => {
-                    return control.getData();
-                },
-                setData: async (control: ScomSlotConfigInput, value: string, rowData: any) => {
-                    await control.ready();
-                    control.setData(rowData?.config)
-                }
+            {
+                type: 'Control',
+                scope: '#/properties/defaultStake'
+            },
+            {
+                type: 'Control',
+                scope: '#/properties/firstImage'
+            },
+            {
+                type: 'Control',
+                scope: '#/properties/secondImage'
+            },
+            {
+                type: 'Control',
+                scope: '#/properties/thirdImage'
             }
-        }
+        ]
     }
 }
