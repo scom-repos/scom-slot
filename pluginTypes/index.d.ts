@@ -167,9 +167,13 @@ declare module "@scom/scom-slot" {
         private balanceText;
         private reelContainer;
         private buttonSpin;
-        tag: {};
+        private leftArrow;
+        private rightArrow;
+        private parentContainer;
+        tag: any;
         constructor(parent?: Container, options?: any);
         static create(options?: ScomSlotElement, parent?: Container): Promise<ScomSlot>;
+        set width(value: string | number);
         private initModel;
         getConfigurators(): {
             name: string;
@@ -208,14 +212,17 @@ declare module "@scom/scom-slot" {
         };
         getData(): ISlotInfo;
         setData(value: ISlotInfo): Promise<void>;
-        getTag(): {};
+        getTag(): any;
         setTag(value: any): Promise<void>;
         private updateUIBySetData;
         updateBalance(): void;
         private loadAsset;
         private updateSlot;
         private updateContainer;
+        private updateStackInfo;
+        private updateButtonSpin;
         private initSlot;
+        resizeLayout(): void;
         private isEmptyData;
         init(): Promise<void>;
         render(): any;

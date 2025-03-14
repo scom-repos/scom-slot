@@ -38,6 +38,18 @@ export class SlotModel {
   getConfigurators() {
     return [
       {
+        name: 'Builder Configurator',
+        target: 'Builders',
+        getActions: this.getActions.bind(this),
+        getData: this.getData.bind(this),
+        setData: async (value: any) => {
+          const defaultData: ISlotInfo = { defaultStake: DEFAULT_STAKE,  slotName: this.module.i18n.get('$slot_machine') };
+          this.setData({ ...defaultData, ...value });
+        },
+        getTag: this.getTag.bind(this),
+        setTag: this.setTag.bind(this)
+      },
+      {
         name: 'Editor',
         target: 'Editor',
         getActions: this.getActions.bind(this),
