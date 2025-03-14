@@ -99,6 +99,18 @@ define("@scom/scom-slot/model.ts", ["require", "exports", "@ijstech/components",
         getConfigurators() {
             return [
                 {
+                    name: 'Builder Configurator',
+                    target: 'Builders',
+                    getActions: this.getActions.bind(this),
+                    getData: this.getData.bind(this),
+                    setData: async (value) => {
+                        const defaultData = { defaultStake: exports.DEFAULT_STAKE, slotName: this.module.i18n.get('$slot_machine') };
+                        this.setData({ ...defaultData, ...value });
+                    },
+                    getTag: this.getTag.bind(this),
+                    setTag: this.setTag.bind(this)
+                },
+                {
                     name: 'Editor',
                     target: 'Editor',
                     getActions: this.getActions.bind(this),
@@ -329,6 +341,10 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
             await self.ready();
             return self;
         }
+        set width(value) {
+            this.tag.width = value;
+            this.resizeLayout();
+        }
         initModel() {
             if (!this.model) {
                 this.i18n.init({ ...translations_json_1.default });
@@ -391,8 +407,8 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
             const { slotName } = this.getData() || {};
             if (this.headerText) {
                 this.headerText.text = slotName || this.i18n.get('$slot_machine');
-                this.stackText.text = this.model.stake;
-                this.buttonSpin.alpha = this.model.balance < this.model.stake ? 0.5 : 1;
+                this.updateButtonSpin();
+                this.updateStackInfo();
                 this.updateContainer();
             }
         }
@@ -400,7 +416,7 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
             this.model.reels = [];
             if (this.reelContainer) {
                 try {
-                    this.app.stage.removeChild(this.reelContainer);
+                    this.parentContainer.removeChild(this.reelContainer);
                 }
                 catch { }
             }
@@ -436,30 +452,41 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
                 }
                 this.model.reels.push(this.model.reel);
             }
-            this.app.stage.addChild(this.reelContainer);
+            this.parentContainer.addChild(this.reelContainer);
+        }
+        updateStackInfo() {
+            this.stackText.text = this.model.stake;
+            this.leftArrow.cursor = this.model.stake > 1 ? 'pointer' : 'default';
+            this.leftArrow.alpha = this.model.stake > 1 ? 1 : 0.5;
+            this.rightArrow.cursor = this.model.stake < 3 ? 'pointer' : 'default';
+            this.rightArrow.alpha = this.model.stake < 3 ? 1 : 0.5;
+        }
+        updateButtonSpin() {
+            this.buttonSpin.cursor = this.model.balance < this.model.stake ? 'default' : 'pointer';
+            this.buttonSpin.alpha = this.model.balance < this.model.stake ? 0.5 : 1;
         }
         async initSlot() {
             await this.loadAsset();
+            this.parentContainer = new scom_pixi_1.Container();
             //container for footer items
             const footerContainer = new scom_pixi_1.Container();
             // draw a rounded rectangle
             let graphicsOne = new scom_pixi_1.Graphics();
-            graphicsOne.lineStyle(2, 0xFF00FF, 1);
-            graphicsOne.beginFill(0xFF00BB, 0.25);
-            graphicsOne.drawRoundedRect(50, 296, 120, 35, 15);
-            graphicsOne.endFill();
+            graphicsOne.roundRect(50, 296, 120, 35, 15);
+            graphicsOne.stroke({ width: 2, color: 0xFF00FF, alpha: 1 });
+            graphicsOne.fill({ color: 0xFF00BB, alpha: 0.25 });
             // draw a rounded rectangle
             let graphicsTwo = new scom_pixi_1.Graphics();
-            graphicsTwo.lineStyle(2, 0xFF00FF, 1);
-            graphicsTwo.beginFill(0xFF00BB, 0.25);
-            graphicsTwo.drawRoundedRect(255, 296, 120, 35, 15);
-            graphicsTwo.endFill();
+            graphicsTwo.roundRect(255, 296, 120, 35, 15);
+            graphicsTwo.stroke({ width: 2, color: 0xFF00FF, alpha: 1 });
+            graphicsTwo.fill({ color: 0xFF00BB, alpha: 0.25 });
             //draw coin image for total balance
             let coins = scom_pixi_1.Sprite.from(`${moduleDir}/assets/images/coin.png`);
             coins.x = this.app.screen.width - 150;
             coins.y = 2;
             coins.scale.x *= 0.08;
             coins.scale.y *= 0.08;
+            coins.zIndex = 1;
             //Create PIXI container to hold all app buttons
             const buttonsHolder = new scom_pixi_1.Container();
             buttonsHolder.x = 0;
@@ -478,40 +505,33 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
                 return button;
             };
             //Add image sprite, sound, location and scale leftArrow button
-            const leftArrow = makeImageButton(`${moduleDir}/assets/images/leftArrow.png`, `${moduleDir}/assets/sounds/mp3/multimedia_button_click_006.mp3`, `${moduleDir}/assets/sounds/ogg/multimedia_button_click_006.mp3`, 220, 296, 0.05);
+            this.leftArrow = makeImageButton(`${moduleDir}/assets/images/leftArrow.png`, `${moduleDir}/assets/sounds/mp3/multimedia_button_click_006.mp3`, `${moduleDir}/assets/sounds/ogg/multimedia_button_click_006.mp3`, 220, 296, 0.05);
             //Add image sprite, sound, location and scale rightArrow button
-            const rightArrow = makeImageButton(`${moduleDir}/assets/images/rightArrow.png`, `${moduleDir}/assets/sounds/mp3/multimedia_button_click_006.mp3`, `${moduleDir}/assets/sounds/ogg/multimedia_button_click_006.mp3`, 380, 296, 0.05);
+            this.rightArrow = makeImageButton(`${moduleDir}/assets/images/rightArrow.png`, `${moduleDir}/assets/sounds/mp3/multimedia_button_click_006.mp3`, `${moduleDir}/assets/sounds/ogg/multimedia_button_click_006.mp3`, 380, 296, 0.05);
             //Add image sprite, sound, location and scale the spinButton button
             this.buttonSpin = makeImageButton(`${moduleDir}/assets/images/spin.png`, `${moduleDir}/assets/sounds/mp3/zapsplat_foley_money_pouch_fabric_coins_down_on_surface_006_15052.mp3`, `${moduleDir}/assets/sounds/ogg/zapsplat_foley_money_pouch_fabric_coins_down_on_surface_006_15052.mp3`, 460, 235, 0.2);
+            this.updateButtonSpin();
             //check for event on click on rightArrow button and call AddStake function
-            rightArrow.addListener("pointerdown", () => {
+            this.rightArrow.addListener("pointerdown", () => {
                 this.model.addStake();
-                // pdate  PIXI stack text on screen
-                this.stackText.text = this.model.stake;
+                this.updateStackInfo();
             });
             //check for event on click on leftArrow button and call MinusStake function
-            leftArrow.addListener("pointerdown", () => {
+            this.leftArrow.addListener("pointerdown", () => {
                 this.model.minusStake();
-                //update  PIXI text on screen
-                this.stackText.text = this.model.stake;
+                this.updateStackInfo();
             });
             //check for event on spin button
             this.buttonSpin.addListener('pointerdown', () => {
+                this.buttonSpin.cursor = 'default';
                 this.buttonSpin.alpha = 0.5;
-                this.model.startPlay(moduleDir);
-                //Reduce balance on click depending on bet amount
-                //Add changes on canvas environment
+                this.model.startPlay(moduleDir, () => {
+                    this.updateButtonSpin();
+                });
                 this.balanceText.text = this.model.balance;
-                this.buttonSpin.alpha = this.model.balance < this.model.stake ? 0.5 : 1;
-                console.log('button clicked');
             });
             // Build the reels
             this.updateContainer();
-            /* TODO:
-                -change style of top and bottom canvas background
-                FIXME:
-                - responsive on all devices
-            */
             //Build top & bottom covers
             const margin = (this.app.screen.height - model_1.SYMBOL_SIZE * 3) / 2;
             const top = new scom_pixi_1.Graphics();
@@ -545,33 +565,71 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
             });
             const { slotName } = this.getData() || {};
             //Add header text
-            this.headerText = new scom_pixi_1.Text(slotName || this.i18n.get('$slot_machine'), style);
+            this.headerText = new scom_pixi_1.Text({ text: slotName || this.i18n.get('$slot_machine'), style });
             this.headerText.x = Math.round((top.width - this.headerText.width) / 2);
             this.headerText.y = Math.round((margin - this.headerText.height) / 2);
             top.addChild(this.headerText);
             //Stack Selector Text between arrow buttons
-            this.stackText = new scom_pixi_1.Text(`${this.model.stake}`, style);
+            this.stackText = new scom_pixi_1.Text({ text: `${this.model.stake}`, style });
             this.stackText.x = (this.app.screen.width / 2 - 15);
             this.stackText.y = 295;
+            this.updateStackInfo();
             footerContainer.addChild(this.stackText);
             //Add win text to the canvas
-            this.winText = new scom_pixi_1.Text(`${this.model.win}`, style);
+            this.winText = new scom_pixi_1.Text({ text: `${this.model.win}`, style });
             this.winText.x = 100;
             this.winText.y = 295;
             footerContainer.addChild(this.winText);
             //Add balance text to the canvas
-            this.balanceText = new scom_pixi_1.Text(`${this.model.balance}`, style);
+            this.balanceText = new scom_pixi_1.Text({ text: `${this.model.balance}`, style });
             this.balanceText.x = 535;
             this.balanceText.y = 7;
             top.addChild(this.balanceText);
-            this.app.stage.addChild(top);
-            this.app.stage.addChild(coins);
-            this.app.stage.addChild(footerContainer);
+            this.parentContainer.addChild(top);
+            this.parentContainer.addChild(coins);
+            this.parentContainer.addChild(footerContainer);
+            this.app.stage.addChild(this.parentContainer);
             footerContainer.addChild(bottom, graphicsOne, graphicsTwo, buttonsHolder, this.buttonSpin, this.stackText, this.winText);
             footerContainer.x = 0;
             footerContainer.y = 20;
             footerContainer.zIndex = 1;
             this.model.running = false;
+        }
+        resizeLayout() {
+            if (!this.app?.renderer || !this.parentContainer)
+                return;
+            const tagWidth = Number(this.tag?.width);
+            const osWidth = this.offsetWidth;
+            let width = window.innerWidth;
+            let height = window.innerHeight;
+            if (osWidth !== 0 && !isNaN(tagWidth) && tagWidth !== 0) {
+                width = Math.min(osWidth, tagWidth);
+            }
+            else if (osWidth !== 0) {
+                width = osWidth;
+            }
+            else if (!isNaN(tagWidth) && tagWidth !== 0) {
+                width = tagWidth;
+            }
+            const scaleFactor = Math.min(width / model_1.DEFAULT_WIDTH, height / model_1.DEFAULT_HEIGHT);
+            if (scaleFactor <= 1) {
+                const aspectRatio = model_1.DEFAULT_WIDTH / model_1.DEFAULT_HEIGHT;
+                let newWidth = Math.min(width, model_1.DEFAULT_WIDTH);
+                let newHeight = width / aspectRatio;
+                if (newHeight > height) {
+                    newHeight = Math.min(height, model_1.DEFAULT_HEIGHT);
+                    newWidth = newHeight * aspectRatio;
+                }
+                this.app.renderer.resize(newWidth, newHeight);
+                this.parentContainer.scale.set(scaleFactor);
+            }
+            else {
+                const { width, height } = this.app.renderer;
+                if (width < model_1.DEFAULT_WIDTH || height < model_1.DEFAULT_HEIGHT) {
+                    this.app.renderer.resize(model_1.DEFAULT_WIDTH, model_1.DEFAULT_HEIGHT);
+                    this.parentContainer.scale.set(1);
+                }
+            }
         }
         isEmptyData(value) {
             return !value || !value.slotName;
@@ -607,6 +665,10 @@ define("@scom/scom-slot", ["require", "exports", "@ijstech/components", "@scom/s
             this.app.ticker.add(delta => {
                 // Update the slots
                 this.model.updateReels();
+            });
+            this.resizeLayout();
+            window.addEventListener('resize', () => {
+                this.resizeLayout();
             });
         }
         render() {
